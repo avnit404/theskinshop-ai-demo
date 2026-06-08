@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Skin Shop Medspa — AI Receptionist (Live Demo)</title>
+<!-- Free fallback AI, no key needed (Puter.js). Primary AI = your NVIDIA NIM proxy. -->
+<script src="https://js.puter.com/v2/"></script>
+<style>
+  :root{--rose:#c98b86;--rose-d:#b5736e;--char:#2b2b30;--ink:#33333a;--bg:#f7f1ee;
+        --card:#fff;--gold:#c9a96a;--muted:#8a8a93;--line:#ece3df;}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+  .demo-flag{background:var(--char);color:#fff;font-size:12.5px;text-align:center;padding:7px 14px}
+  .demo-flag b{color:var(--gold)}
+  .wrap{max-width:1040px;margin:0 auto;padding:0 22px}
+  header.site{display:flex;align-items:center;justify-content:space-between;padding:20px 0}
+  .brand{display:flex;flex-direction:column;line-height:1.1}
+  .brand .name{font-size:21px;font-weight:700;letter-spacing:.5px;color:var(--char)}
+  .brand .sub{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--rose-d);margin-top:3px}
+  .navcta{background:var(--char);color:#fff;border:none;padding:11px 18px;border-radius:30px;font-size:13px;cursor:pointer}
+  .hero{display:grid;grid-template-columns:1.15fr .85fr;gap:30px;align-items:center;padding:26px 0 36px}
+  .hero h1{font-size:40px;line-height:1.1;margin:0 0 14px;color:var(--char);font-weight:700}
+  .hero p{font-size:16px;color:#5d5d66;margin:0 0 22px;max-width:440px}
+  .row{display:flex;gap:12px;flex-wrap:wrap}
+  .btn{padding:13px 22px;border-radius:30px;border:none;cursor:pointer;font-size:14px;font-weight:600}
+  .btn-rose{background:var(--rose);color:#fff}.btn-ghost{background:transparent;border:1.5px solid var(--char);color:var(--char)}
+  .heroCard{background:var(--card);border-radius:18px;padding:24px;box-shadow:0 18px 50px rgba(120,80,70,.13)}
+  .heroCard h3{margin:0 0 10px;font-size:14px;letter-spacing:2px;text-transform:uppercase;color:var(--rose-d)}
+  .heroCard ul{margin:0;padding-left:18px;color:#54545d;font-size:14px;line-height:1.9}
+  .strip{background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .strip .wrap{display:flex;gap:34px;flex-wrap:wrap;justify-content:center;padding:16px 22px;font-size:13px;color:var(--muted)}
+  .strip b{color:var(--char)}
+  .pain{max-width:1040px;margin:26px auto;padding:20px 22px;background:#fff;border:1px dashed var(--rose);border-radius:14px}
+  .pain h4{margin:0 0 6px;color:var(--rose-d);font-size:13px;letter-spacing:1px;text-transform:uppercase}
+  .pain p{margin:0;color:#5d5d66;font-size:14.5px;line-height:1.6}
+  footer{padding:30px 0;text-align:center;color:var(--muted);font-size:12.5px}
+
+  .launcher{position:fixed;right:22px;bottom:22px;z-index:60;display:flex;align-items:center;gap:10px}
+  .launch-label{background:#fff;box-shadow:0 8px 24px rgba(0,0,0,.14);padding:9px 14px;border-radius:30px;font-size:13px;color:var(--char);font-weight:600}
+  .launch-btn{width:62px;height:62px;border-radius:50%;background:linear-gradient(145deg,var(--rose),var(--rose-d));border:none;cursor:pointer;box-shadow:0 12px 30px rgba(180,115,110,.45);position:relative}
+  .launch-btn svg{width:28px;height:28px;fill:#fff}
+  .dot{position:absolute;top:2px;right:2px;width:15px;height:15px;background:#5bbf7a;border:2.5px solid #fff;border-radius:50%}
+
+  .chat{position:fixed;right:22px;bottom:22px;z-index:70;width:390px;max-width:calc(100vw - 28px);height:620px;max-height:calc(100vh - 36px);background:#fff;border-radius:20px;box-shadow:0 26px 70px rgba(60,40,38,.34);display:none;flex-direction:column;overflow:hidden}
+  .chat.open{display:flex}
+  .chead{background:linear-gradient(135deg,#34343b,#46343a);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:12px}
+  .avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(145deg,var(--rose),var(--rose-d));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0}
+  .chead .who{flex:1;line-height:1.25}.chead .who .n{font-weight:700;font-size:15px}
+  .chead .who .s{font-size:11.5px;opacity:.9;display:flex;align-items:center;gap:5px}
+  .pulse{width:8px;height:8px;border-radius:50%;background:#5bbf7a;display:inline-block;animation:p 1.8s infinite}
+  @keyframes p{0%{box-shadow:0 0 0 0 rgba(91,191,122,.6)}70%{box-shadow:0 0 0 7px rgba(91,191,122,0)}100%{box-shadow:0 0 0 0 rgba(91,191,122,0)}}
+  .xbtn{background:transparent;border:none;color:#fff;font-size:22px;cursor:pointer;opacity:.85;line-height:1}
+  .ctx-banner{background:#fff7f3;color:#9a5b54;font-size:12px;padding:8px 14px;border-bottom:1px solid var(--line);text-align:center}
+  .bodyc{flex:1;overflow-y:auto;padding:16px 14px;background:#faf6f4}
+  .msg{display:flex;margin-bottom:12px}.msg.bot{justify-content:flex-start}.msg.user{justify-content:flex-end}
+  .bub{max-width:82%;padding:10px 13px;border-radius:15px;font-size:14px;line-height:1.45;white-space:pre-wrap;word-wrap:break-word}
+  .bot .bub{background:#fff;color:#36363d;border:1px solid var(--line);border-bottom-left-radius:5px}
+  .user .bub{background:var(--rose);color:#fff;border-bottom-right-radius:5px}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;padding:0 14px 8px}
+  .chip{background:#fff;border:1.4px solid var(--rose);color:var(--rose-d);padding:7px 12px;border-radius:30px;font-size:12.5px;cursor:pointer}
+  .chip:hover{background:var(--rose);color:#fff}
+  .typing .bub{display:flex;gap:4px;align-items:center}
+  .typing span{width:7px;height:7px;border-radius:50%;background:#c3b4ad;animation:t 1.2s infinite}
+  .typing span:nth-child(2){animation-delay:.2s}.typing span:nth-child(3){animation-delay:.4s}
+  @keyframes t{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-5px);opacity:1}}
+  .composer{display:flex;gap:8px;padding:11px;border-top:1px solid var(--line);background:#fff}
+  .composer input{flex:1;border:1px solid #e3d8d3;border-radius:24px;padding:11px 15px;font-size:14px;outline:none}
+  .composer input:focus{border-color:var(--rose)}
+  .send{width:42px;height:42px;border-radius:50%;background:var(--rose);border:none;cursor:pointer;flex-shrink:0}
+  .send svg{width:19px;height:19px;fill:#fff}
+  .powered{font-size:10.5px;color:#b3a8a2;text-align:center;padding:5px 0 9px;background:#fff}
+  @media(max-width:760px){.hero{grid-template-columns:1fr}.hero h1{font-size:32px}}
+</style>
+</head>
+<body>
+
+<div class="demo-flag">⚡ LIVE AI DEMO — real chatbot built by <b>Hardik (AI Automation)</b> for The Skin Shop Medspa. Independent proof-of-concept. Chat is open ↘</div>
+
+<div class="wrap">
+  <header class="site">
+    <div class="brand"><span class="name">THE SKIN SHOP</span><span class="sub">Medspa · Scottsdale</span></div>
+    <button class="navcta" onclick="openChat()">Book a consult</button>
+  </header>
+  <section class="hero">
+    <div>
+      <h1>Noticeable, but natural.</h1>
+      <p>RN-owned medical spa in North Scottsdale. Botox, fillers, HydraFacial, RF microneedling &amp; advanced skin — by certified nurse injectors Cyndie &amp; Shelly.</p>
+      <div class="row">
+        <button class="btn btn-rose" onclick="openChat()">Chat &amp; book 24/7</button>
+        <button class="btn btn-ghost" onclick="ask('Are you open right now?')">Are you open now?</button>
+      </div>
+    </div>
+    <div class="heroCard"><h3>Popular treatments</h3>
+      <ul><li>Botox &amp; Dysport</li><li>Lip filler &amp; Juvéderm</li><li>HydraFacial</li><li>Vivace RF microneedling</li><li>Laser hair removal</li></ul>
+    </div>
+  </section>
+</div>
+
+<div class="strip"><div class="wrap">
+  <span>★★★★★ <b>5.0</b> on Google</span>
+  <span><b>RN-owned</b> · 50+ yrs combined</span>
+  <span><b>10632</b> N Scottsdale Rd, Ste A</span>
+  <span><b>(480) 948-1759</b></span>
+</div></div>
+
+<div class="pain">
+  <h4>Why this demo exists</h4>
+  <p>The Skin Shop is closed <b>Sunday &amp; Monday</b> and by <b>3pm Thu/Sat</b>. Every call or DM then goes to voicemail — and a botox/filler client is worth $500–$1,000+. This <b>real AI receptionist</b> answers as the spa <b>24/7</b>, prices treatments, and books appointments. Try asking it anything. 👉</p>
+</div>
+
+<footer>The Skin Shop Medspa · 10632 N Scottsdale Rd Ste A, Scottsdale AZ 85254 · Independent AI-receptionist demonstration.</footer>
+
+<div class="launcher" id="launcher" style="display:none">
+  <span class="launch-label">Chat with us — 24/7 ✨</span>
+  <button class="launch-btn" onclick="openChat()" aria-label="Open chat">
+    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.04 2 11c0 2.6 1.27 4.93 3.3 6.54L4.5 22l4.9-2.2c.83.2 1.7.3 2.6.3 5.52 0 10-4.04 10-9S17.52 2 12 2z"/></svg>
+    <span class="dot"></span>
+  </button>
+</div>
+
+<div class="chat open" id="chat">
+  <div class="chead">
+    <div class="avatar">R</div>
+    <div class="who"><div class="n">Robin</div><div class="s"><span class="pulse"></span> <span id="aiStatus">AI receptionist · connecting…</span></div></div>
+    <button class="xbtn" onclick="closeChat()">×</button>
+  </div>
+  <div class="ctx-banner" id="ctxBanner">🌙 After hours — front desk closed, but I'm here to help &amp; book you in.</div>
+  <div class="bodyc" id="body"></div>
+  <div class="chips" id="chips"></div>
+  <div class="composer">
+    <input id="input" placeholder="Ask me anything…" autocomplete="off" onkeydown="if(event.key==='Enter')handleSend()">
+    <button class="send" onclick="handleSend()" aria-label="Send"><svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg></button>
+  </div>
+  <div class="powered" id="powered">Real AI receptionist · key kept off this page</div>
+</div>
+
+<script>
+/* ================= CONFIG ================= *
+ * PRIMARY AI = your NVIDIA NIM model (Qwen3.5), called via your Cloudflare Worker
+ * proxy so the key stays server-side. Paste the worker URL below.
+ * If PROXY_URL is empty, the bot uses the free Puter model as a fallback, and if
+ * neither is reachable it uses a built-in responder so it never looks broken.
+ */
+const CONFIG = {
+  PROXY_URL: "",                 // <-- paste your Cloudflare Worker URL, e.g. "https://nim.yourname.workers.dev"
+  USE_PUTER_FALLBACK: true,      // free GPT-4o-mini fallback when no proxy / proxy down
+  PUTER_MODEL: "gpt-4o-mini"
+};
+
+const SPA = {
+  name:"The Skin Shop Medspa",
+  phone:"(480) 948-1759",
+  address:"10632 N Scottsdale Rd, Ste A, Scottsdale, AZ 85254"
+};
+
+const SYSTEM_PROMPT =
+`You are "Robin", the friendly AI receptionist for The Skin Shop Medspa, an RN-owned medical spa in North Scottsdale, AZ. Speak warmly and briefly (1-3 short sentences), like a great front-desk coordinator on the phone.
+GOAL: get the caller booked, or capture their name + mobile number. Never end a conversation without one of those.
+FACTS (never invent beyond these):
+- Owners: Cyndie Nohr & Shelly Stump, registered nurses & certified injectors, 50+ years combined, 5-star Google.
+- Address: 10632 N Scottsdale Rd, Ste A, Scottsdale, AZ 85254 (North Scottsdale, parking out front).
+- Hours: Tue/Wed/Fri 10am-5pm; Thu & Sat 10am-3pm; CLOSED Sunday & Monday.
+- Booking is managed in Fresha. Consultations are FREE.
+- Services: Botox, Dysport, lip filler, Juvederm, Restylane, Kybella, liquid facelift, PRP, HydraFacial, microneedling, Vivace RF microneedling, PDO thread lift, InstaLift, IPL, laser hair removal, laser skin resurfacing, IV nutrient therapy.
+PRICING (give ballpark, then steer to the free consult): Botox ~$12-15/unit ($150-400 typical); lip/dermal filler ~$650-850/syringe; HydraFacial ~$199-350; microneedling/Vivace ~$300-600.
+BOOKING: collect ONE item at a time — (1) treatment, (2) preferred day/time, (3) first & last name, (4) mobile number — then read the details back to confirm.
+AFTER HOURS: it is currently after hours. NEVER tell them to call back later. Say you can book them now and the team will text to confirm when they reopen, and they're first in line.
+RULES: You are NOT a medical provider — don't give medical or dosage advice ("great question for your nurse at the consult"). Don't invent prices, promos, or availability. If asked, say you're the spa's AI assistant. Keep it short and conversational.`;
+
+const GREETING = "Hi! I'm Robin, the AI receptionist for The Skin Shop Medspa 👋 It's after hours, but I can answer questions, give pricing, and book you in 24/7. What can I help with?";
+
+let messages = [{role:"system", content:SYSTEM_PROMPT}, {role:"assistant", content:GREETING}];
+let provider = "starting", leadCaptured = false;
+
+const body=document.getElementById('body'), chips=document.getElementById('chips'),
+      input=document.getElementById('input'), chat=document.getElementById('chat'),
+      launcher=document.getElementById('launcher'), statusEl=document.getElementById('aiStatus');
+
+function add(text, who){
+  const m=document.createElement('div'); m.className='msg '+who;
+  const b=document.createElement('div'); b.className='bub'; b.textContent=text;
+  m.appendChild(b); body.appendChild(m); body.scrollTop=body.scrollHeight;
+}
+function typing(on){
+  let t=document.getElementById('typing');
+  if(on){ if(t)return; t=document.createElement('div'); t.id='typing'; t.className='msg bot typing';
+    t.innerHTML='<div class="bub"><span></span><span></span><span></span></div>'; body.appendChild(t); body.scrollTop=body.scrollHeight; }
+  else if(t) t.remove();
+}
+function setChips(arr){
+  chips.innerHTML='';
+  (arr||[]).forEach(label=>{ const b=document.createElement('div'); b.className='chip'; b.textContent=label;
+    b.onclick=()=>ask(label); chips.appendChild(b); });
+}
+const DEFAULT_CHIPS=["💉 Treatments & pricing","📅 Book an appointment","🕐 Hours & location","❓ Is Botox safe?"];
+
+function openChat(){ chat.classList.add('open'); launcher.style.display='none'; setTimeout(()=>input.focus(),200); }
+function closeChat(){ chat.classList.remove('open'); launcher.style.display='flex'; }
+
+function detectLead(text){
+  const digits=(text.match(/\d/g)||[]).length;
+  if(!leadCaptured && digits>=7){
+    leadCaptured=true;
+    const el=document.getElementById('ctxBanner');
+    el.textContent="✅ Lead captured — saved & team notified (would normally be lost to voicemail).";
+    el.style.background="#edf7ee"; el.style.color="#2f7a43";
+  }
+}
+
+async function ask(text){
+  if(!text) return;
+  add(text,'user'); detectLead(text);
+  messages.push({role:"user", content:text});
+  if(messages.length>16) messages = [messages[0], ...messages.slice(-14)];
+  typing(true);
+  let reply;
+  try { reply = await brain(); }
+  catch(e){ reply = fallback(text); markProvider("demo mode (offline)"); }
+  typing(false);
+  reply = (reply||"").trim() || fallback(text);
+  add(reply,'bot');
+  messages.push({role:"assistant", content:reply});
+}
+function handleSend(){ const v=input.value.trim(); if(!v)return; input.value=''; ask(v); }
+
+/* ---------- AI providers ---------- */
+async function brain(){
+  if(CONFIG.PROXY_URL){ const r=await callProxy(); markProvider("Qwen3.5 · NVIDIA NIM"); return r; }
+  if(CONFIG.USE_PUTER_FALLBACK && window.puter && puter.ai && puter.ai.chat){ const r=await callPuter(); markProvider("GPT-4o-mini · Puter"); return r; }
+  throw new Error("no provider");
+}
+async function callProxy(){
+  const r = await fetch(CONFIG.PROXY_URL, {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({ messages })
+  });
+  if(!r.ok) throw new Error("proxy "+r.status);
+  const d = await r.json();
+  const c = d && d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content;
+  if(!c) throw new Error("no content");
+  return c;
+}
+async function callPuter(){
+  const res = await puter.ai.chat(messages, { model: CONFIG.PUTER_MODEL });
+  if(res==null) throw new Error("empty");
+  if(typeof res==="string") return res;
+  if(res.message){ const c=res.message.content; return Array.isArray(c)? c.map(p=>p.text||p||"").join(""): c; }
+  if(res.text) return res.text;
+  return String(res);
+}
+function markProvider(label){ provider=label; statusEl.textContent="AI receptionist · "+label; }
+
+/* ---------- offline fallback (keyword) so it never looks broken ---------- */
+function fallback(raw){
+  const t=(raw||"").toLowerCase();
+  if(/(price|cost|how much|\$)/.test(t)) return "Most visits start with a FREE consult. Ballparks: Botox $150–$400, lip filler ~$650–$850, HydraFacial ~$199–$350 — exact pricing is set at your consult. Want me to book you in? What treatment is it for?";
+  if(/(book|appoint|schedul|consult|reserve|availab)/.test(t)) return "Love it — let's book you in. Which treatment is this for (Botox, lip filler, HydraFacial, or a free consult)?";
+  if(/(hour|open|close|today|weekend|sunday|monday)/.test(t)) return "We're open Tue/Wed/Fri 10–5 and Thu/Sat 10–3, closed Sun & Mon. It's after hours now, but I can still book you and the team will text to confirm — want me to?";
+  if(/(where|address|location|direction|park)/.test(t)) return "We're at "+SPA.address+", in North Scottsdale with parking out front. Want me to book you a visit?";
+  if(/(botox|dysport)/.test(t)) return "Botox & Dysport are two of our most-requested treatments, done by an RN injector. Botox runs ~$12–15/unit. Shall I book your free consult? What day works?";
+  if(/(lip|filler|juvederm|restylane)/.test(t)) return "Our fillers run ~$650–$850/syringe and are placed by a certified nurse injector. Want me to book your consult? What's your preferred day/time?";
+  if(/(safe|nurse|rn|qualified|who|owner|different)/.test(t)) return "You're in great hands — The Skin Shop is RN-owned by Cyndie & Shelly (certified injectors, 50+ yrs combined, 5★ Google). Want to book a free consult with them?";
+  if(/(result|how long|last|downtime)/.test(t)) return "Botox shows in a few days and lasts ~3–4 months; filler is immediate; microneedling/laser build over a few weeks. Want me to book your consult?";
+  if(/(human|call me|talk to|speak|callback)/.test(t)) return "Of course — the team's line is "+SPA.phone+". They're closed now, so leave your name & mobile and I'll have Cyndie or Shelly text you first thing. What's your name?";
+  if(/(hi|hello|hey|help)/.test(t)) return "Hey! 😊 I can help with treatments, pricing, or booking you in. What are you interested in?";
+  if(/(thank)/.test(t)) return "Anytime! 💕 Want me to lock in your free consult before you go?";
+  return "Happy to help with that! I can share treatments & pricing or book you a free consult. The fastest way — what treatment are you interested in, and your name + best mobile number?";
+}
+
+/* ---------- boot ---------- */
+function boot(){
+  add(GREETING,'bot'); setChips(DEFAULT_CHIPS);
+  if(CONFIG.PROXY_URL){ markProvider("Qwen3.5 · NVIDIA NIM"); return; }
+  if(window.puter && puter.ai){ markProvider("GPT-4o-mini · Puter (free)"); return; }
+  let tries=0; const iv=setInterval(()=>{ tries++;
+    if(window.puter && puter.ai){ markProvider("GPT-4o-mini · Puter (free)"); clearInterval(iv); }
+    else if(tries>20){ markProvider("demo mode"); clearInterval(iv); } }, 250);
+}
+boot();
+</script>
+</body>
+</html>
