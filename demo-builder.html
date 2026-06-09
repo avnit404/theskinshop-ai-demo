@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Demo-Site Builder — custom landing page + chatbot in 2 minutes</title>
+<style>
+  :root{--ink:#1f2430;--mut:#6b7280;--line:#e5e7eb;--brand:#6366f1;--bg:#f6f7fb;--card:#fff;--ok:#16a34a}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+  .top{background:#0f1220;color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+  .top h1{font-size:17px;margin:0;font-weight:700}
+  .top .tag{font-size:12.5px;color:#aab;}
+  .wrap{display:grid;grid-template-columns:minmax(360px,1fr) 1.1fr;gap:0;height:calc(100vh - 52px)}
+  @media(max-width:900px){.wrap{grid-template-columns:1fr;height:auto}}
+  .panel{padding:18px 20px;overflow-y:auto}
+  .form{background:var(--bg);border-right:1px solid var(--line)}
+  .preview{background:#eceef5;display:flex;flex-direction:column}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:.6px;color:var(--mut);margin:18px 0 10px}
+  h2:first-child{margin-top:2px}
+  label{display:block;font-size:12.5px;font-weight:600;margin:10px 0 4px;color:#374151}
+  input,textarea,select{width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-size:13.5px;font-family:inherit;background:#fff;color:var(--ink)}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--brand)}
+  textarea{resize:vertical;min-height:62px;line-height:1.45}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .hint{font-size:11.5px;color:var(--mut);margin-top:3px}
+  .btn{border:none;border-radius:9px;padding:11px 16px;font-size:14px;font-weight:600;cursor:pointer}
+  .btn-brand{background:var(--brand);color:#fff}
+  .btn-dark{background:#0f1220;color:#fff}
+  .btn-ghost{background:#fff;border:1px solid var(--line);color:var(--ink)}
+  .btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  .ai-box{background:#eef2ff;border:1px solid #c7d2fe;border-radius:11px;padding:12px;margin:6px 0 4px}
+  .ai-box .t{font-weight:700;font-size:13px;color:#4338ca;margin-bottom:6px}
+  .pv-head{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#fff;border-bottom:1px solid var(--line)}
+  .pv-head .u{font-size:12px;color:var(--mut);font-family:ui-monospace,Menlo,monospace;background:#f3f4f6;padding:5px 10px;border-radius:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60%}
+  iframe{flex:1;border:0;width:100%;background:#fff}
+  .status{font-size:12.5px;padding:8px 12px;border-radius:8px;margin-top:8px;display:none}
+  .status.show{display:block}
+  .status.ok{background:#dcfce7;color:#166534}
+  .status.err{background:#fee2e2;color:#991b1b}
+  .status.work{background:#fef9c3;color:#854d0e}
+  .empty{flex:1;display:flex;align-items:center;justify-content:center;color:#9aa1b2;font-size:14px;text-align:center;padding:30px}
+  details{margin-top:10px;background:#fff;border:1px solid var(--line);border-radius:9px;padding:8px 12px}
+  summary{cursor:pointer;font-size:12.5px;font-weight:600;color:#374151}
+  details p,details li{font-size:12.5px;color:#4b5563;line-height:1.5}
+  code{background:#f3f4f6;padding:1px 5px;border-radius:4px;font-size:12px}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>⚙️ AI Demo-Site Builder</h1>
+  <span class="tag">Fill in a business (or auto-extract from its website) → get a branded landing page + AI chatbot → download &amp; deploy.</span>
+</div>
+
+<div class="wrap">
+  <!-- FORM -->
+  <div class="panel form">
+    <div class="ai-box">
+      <div class="t">✨ Auto-fill from a website (uses your NVIDIA worker)</div>
+      <label>Paste the business's website text (or About/Services page)</label>
+      <textarea id="scrapeText" placeholder="Paste any text from their site — services, hours, pricing, about... Then click Auto-fill."></textarea>
+      <div class="btnrow">
+        <button class="btn btn-brand" id="autofillBtn" onclick="autofill()">✨ Auto-fill the form</button>
+      </div>
+      <div class="status" id="aiStatus"></div>
+    </div>
+
+    <h2>Connection</h2>
+    <label>Your NVIDIA proxy Worker URL</label>
+    <input id="workerUrl" value="https://fancy-fire-b15c.avnitnavadiya404.workers.dev" placeholder="https://your-worker.workers.dev">
+    <div class="hint">The chatbot in every generated site calls this. Your key stays inside the worker.</div>
+
+    <h2>Business</h2>
+    <div class="row2">
+      <div><label>Business name</label><input id="name" placeholder="Apex Plumbing"></div>
+      <div><label>Industry / type</label>
+        <select id="industry">
+          <option>med spa</option><option>dental clinic</option><option>home services company</option>
+          <option>real estate team</option><option>law firm</option><option>salon</option>
+          <option>restaurant</option><option>fitness studio</option><option>auto shop</option><option>local business</option>
+        </select>
+      </div>
+    </div>
+    <label>Tagline (short)</label><input id="tagline" placeholder="Fast, friendly, on time.">
+    <div class="row2">
+      <div><label>City / area</label><input id="city" placeholder="Austin, TX"></div>
+      <div><label>Phone</label><input id="phone" placeholder="(512) 555-0140"></div>
+    </div>
+    <label>Address</label><input id="address" placeholder="123 Main St, Austin, TX 78701">
+    <div class="row2">
+      <div><label>Booking system / link</label><input id="booking" placeholder="Calendly / Fresha / phone"></div>
+      <div><label>Brand color</label><input id="color" type="color" value="#6366f1"></div>
+    </div>
+    <label>Hours</label><input id="hours" placeholder="Mon-Fri 8-5, closed weekends">
+    <div class="row2">
+      <div><label>Rating (optional)</label><input id="rating" placeholder="4.9"></div>
+      <div><label>Receptionist name</label><input id="persona" value="Robin"></div>
+    </div>
+
+    <h2>Content</h2>
+    <label>Services (one per line)</label>
+    <textarea id="services" placeholder="Drain cleaning&#10;Water heater repair&#10;Emergency plumbing&#10;Leak detection"></textarea>
+    <label>Pricing notes (optional)</label>
+    <textarea id="pricing" placeholder="Service call $89. Most repairs $150-600. Free estimates on installs."></textarea>
+    <label>Top FAQs (optional)</label>
+    <textarea id="faqs" placeholder="Do you offer emergency service? Yes, 24/7.&#10;Are estimates free? Yes for installs."></textarea>
+
+    <div class="btnrow">
+      <button class="btn btn-dark" onclick="generate()">⚡ Generate demo</button>
+      <button class="btn btn-brand" id="dlBtn" onclick="download()" disabled>⬇ Download index.html</button>
+      <button class="btn btn-ghost" id="copyBtn" onclick="copyHtml()" disabled>Copy HTML</button>
+      <button class="btn btn-ghost" id="newtabBtn" onclick="openTab()" disabled>Open in new tab ↗</button>
+    </div>
+    <div class="status" id="genStatus"></div>
+
+    <details>
+      <summary>How to put a generated demo online (free)</summary>
+      <p>Keep one GitHub repo named <code>demos</code> with Pages enabled. For each business, add a folder with its file: <code>demos/apex-plumbing/index.html</code>. Its link becomes <code>yourname.github.io/demos/apex-plumbing/</code>. All demos share one origin, so one repo + one Pages setup covers every client.</p>
+    </details>
+    <details>
+      <summary>Lock the worker / change the NVIDIA key</summary>
+      <p><b>Lock to your domain:</b> in the worker code set <code>const ALLOWED_ORIGINS = ["https://yourname.github.io"];</code> then Deploy. (Leave empty while testing.)</p>
+      <p><b>Change/rotate the key:</b> Cloudflare → your worker → Settings → Variables and Secrets → edit <code>NVIDIA_API_KEY</code> → paste new key → Deploy.</p>
+    </details>
+  </div>
+
+  <!-- PREVIEW -->
+  <div class="panel preview" style="padding:0">
+    <div class="pv-head">
+      <strong style="font-size:13px">Live preview</strong>
+      <span class="u" id="pvUrl">— generate to preview —</span>
+    </div>
+    <div class="empty" id="pvEmpty">Fill the form (or auto-fill) and click <b style="margin:0 4px">⚡ Generate demo</b> — your branded site + working chatbot appears here.</div>
+    <iframe id="pv" style="display:none"></iframe>
+  </div>
+</div>
+
+<script>
+/* ============================ GENERATED-SITE TEMPLATE ============================
+   Stored as a normal string. Closing script tags inside are escaped so the browser
+   does not end THIS script early. The BIZ marker is replaced with the business
+   config at generate time. The generated app uses string concatenation only
+   so this template literal stays valid.
+================================================================================== */
+const SITE_TEMPLATE = /*TPL*/`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>__TITLE__ — AI Receptionist (Demo)</title>
+<script src="https://js.puter.com/v2/"><\/script>
+<style>
+  :root{--brand:#6366f1;--ink:#23262f;--mut:#7b8190;--line:#ececf1;--bg:#f7f7fb}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+  .flag{background:#10131c;color:#fff;font-size:12.5px;text-align:center;padding:7px 14px}
+  .flag b{color:var(--brand);filter:brightness(1.5)}
+  .wrap{max-width:1040px;margin:0 auto;padding:0 22px}
+  header{display:flex;align-items:center;justify-content:space-between;padding:20px 0}
+  .bname{font-size:21px;font-weight:800;letter-spacing:.3px}
+  .bsub{font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--brand);margin-top:2px}
+  .cta{background:var(--brand);color:#fff;border:none;padding:11px 18px;border-radius:30px;font-size:13px;cursor:pointer;font-weight:600}
+  .hero{display:grid;grid-template-columns:1.15fr .85fr;gap:30px;align-items:center;padding:20px 0 36px}
+  .hero h1{font-size:38px;line-height:1.08;margin:0 0 14px;font-weight:800}
+  .hero p{font-size:16px;color:#5a606e;margin:0 0 20px}
+  .row{display:flex;gap:12px;flex-wrap:wrap}
+  .btn{padding:13px 20px;border-radius:30px;border:none;cursor:pointer;font-size:14px;font-weight:600}
+  .b1{background:var(--brand);color:#fff}.b2{background:transparent;border:1.5px solid var(--ink);color:var(--ink)}
+  .card{background:#fff;border-radius:16px;padding:22px;box-shadow:0 16px 44px rgba(60,60,90,.12)}
+  .card h3{margin:0 0 10px;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--brand)}
+  .card ul{margin:0;padding-left:18px;color:#52586a;font-size:14px;line-height:1.95}
+  .strip{background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .strip .wrap{display:flex;gap:30px;flex-wrap:wrap;justify-content:center;padding:15px 22px;font-size:13px;color:var(--mut)}
+  .strip b{color:var(--ink)}
+  .pain{max-width:1040px;margin:26px auto;padding:18px 22px;background:#fff;border:1px dashed var(--brand);border-radius:14px}
+  .pain h4{margin:0 0 6px;color:var(--brand);font-size:12.5px;letter-spacing:1px;text-transform:uppercase;filter:brightness(.85)}
+  .pain p{margin:0;color:#5a606e;font-size:14.5px;line-height:1.6}
+  footer{padding:28px 0;text-align:center;color:var(--mut);font-size:12.5px}
+  .launcher{position:fixed;right:22px;bottom:22px;z-index:60;display:flex;align-items:center;gap:10px}
+  .ll{background:#fff;box-shadow:0 8px 24px rgba(0,0,0,.14);padding:9px 14px;border-radius:30px;font-size:13px;font-weight:600}
+  .lb{width:60px;height:60px;border-radius:50%;background:var(--brand);border:none;cursor:pointer;box-shadow:0 12px 30px rgba(60,60,120,.4);color:#fff;font-size:26px}
+  .chat{position:fixed;right:22px;bottom:22px;z-index:70;width:384px;max-width:calc(100vw - 28px);height:600px;max-height:calc(100vh - 36px);background:#fff;border-radius:20px;box-shadow:0 26px 70px rgba(40,40,70,.32);display:none;flex-direction:column;overflow:hidden}
+  .chat.open{display:flex}
+  .ch{background:var(--brand);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:11px}
+  .av{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-weight:700}
+  .ch .nm{font-weight:700;font-size:15px}.ch .st{font-size:11px;opacity:.92}
+  .x{margin-left:auto;background:transparent;border:none;color:#fff;font-size:22px;cursor:pointer}
+  .ban{background:#fff8ef;color:#9a6b2f;font-size:12px;padding:8px 14px;border-bottom:1px solid var(--line);text-align:center}
+  .bd{flex:1;overflow-y:auto;padding:15px 13px;background:#fafafe}
+  .m{display:flex;margin-bottom:11px}.m.bot{justify-content:flex-start}.m.user{justify-content:flex-end}
+  .bub{max-width:82%;padding:10px 13px;border-radius:14px;font-size:14px;line-height:1.45;white-space:pre-wrap;word-wrap:break-word}
+  .bot .bub{background:#fff;border:1px solid var(--line);border-bottom-left-radius:5px}
+  .user .bub{background:var(--brand);color:#fff;border-bottom-right-radius:5px}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;padding:0 13px 8px}
+  .chip{background:#fff;border:1.4px solid var(--brand);color:var(--brand);padding:7px 11px;border-radius:30px;font-size:12.5px;cursor:pointer}
+  .typ .bub{display:flex;gap:4px}.typ span{width:7px;height:7px;border-radius:50%;background:#c7c7d2;animation:t 1.2s infinite}
+  .typ span:nth-child(2){animation-delay:.2s}.typ span:nth-child(3){animation-delay:.4s}
+  @keyframes t{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-5px);opacity:1}}
+  .cmp{display:flex;gap:8px;padding:11px;border-top:1px solid var(--line)}
+  .cmp input{flex:1;border:1px solid #e3e3ec;border-radius:24px;padding:11px 14px;font-size:14px;outline:none}
+  .snd{width:42px;height:42px;border-radius:50%;background:var(--brand);border:none;color:#fff;cursor:pointer;font-size:17px}
+  @media(max-width:760px){.hero{grid-template-columns:1fr}.hero h1{font-size:30px}}
+</style>
+</head>
+<body>
+<div class="flag">⚡ LIVE AI DEMO — independent proof-of-concept built for __TITLE__. Chat is open ↘</div>
+<div class="wrap">
+  <header>
+    <div><div class="bname" id="bname"></div><div class="bsub" id="bsub"></div></div>
+    <button class="cta" onclick="openChat()">Chat &amp; book</button>
+  </header>
+  <section class="hero">
+    <div>
+      <h1 id="h1"></h1>
+      <p id="hp"></p>
+      <div class="row">
+        <button class="btn b1" onclick="openChat()">Chat &amp; book 24/7</button>
+        <button class="btn b2" onclick="ask('Are you open right now?')">Are you open now?</button>
+      </div>
+    </div>
+    <div class="card"><h3>What we do</h3><ul id="svc"></ul></div>
+  </section>
+</div>
+<div class="strip"><div class="wrap" id="strip"></div></div>
+<div class="pain"><h4>Why this demo exists</h4><p id="pain"></p></div>
+<footer id="foot"></footer>
+
+<div class="launcher" id="launcher" style="display:none">
+  <span class="ll">Chat 24/7 ✨</span><button class="lb" onclick="openChat()">💬</button>
+</div>
+<div class="chat open" id="chat">
+  <div class="ch"><div class="av" id="av">R</div>
+    <div><div class="nm" id="pnm">Robin</div><div class="st" id="pst">AI receptionist</div></div>
+    <button class="x" onclick="closeChat()">×</button>
+  </div>
+  <div class="ban" id="ban">After hours — front desk closed, but I can help &amp; book you in.</div>
+  <div class="bd" id="body"></div>
+  <div class="chips" id="chips"></div>
+  <div class="cmp"><input id="inp" placeholder="Ask me anything…" onkeydown="if(event.key==='Enter')send()"><button class="snd" onclick="send()">➤</button></div>
+</div>
+<script>
+/*BIZ*/
+(function(){
+  var b=window.BIZ||{};
+  document.documentElement.style.setProperty('--brand', b.color||'#6366f1');
+  var persona=b.persona||'Robin';
+  function setText(id,t){var e=document.getElementById(id); if(e) e.textContent=t;}
+  setText('bname', b.name||'Your Business'); setText('bsub', (b.industry||'')+' '+(b.city?'· '+b.city:''));
+  setText('h1', b.tagline||((b.name||'We')+' — booked in seconds.'));
+  setText('hp', (b.name||'We')+' is a '+(b.industry||'local business')+(b.city?' in '+b.city:'')+'. This AI receptionist answers every call and message 24/7 and books appointments — even after hours.');
+  var ul=document.getElementById('svc'); (b.services||[]).slice(0,6).forEach(function(s){var li=document.createElement('li');li.textContent=s;ul.appendChild(li);});
+  var strip=document.getElementById('strip'); var bits=[];
+  if(b.rating) bits.push('★ '+b.rating+' rated'); if(b.hours) bits.push(b.hours);
+  if(b.address) bits.push(b.address); if(b.phone) bits.push(b.phone);
+  strip.innerHTML=''; bits.forEach(function(t){var s=document.createElement('span');s.innerHTML='<b>'+t+'</b>';strip.appendChild(s);});
+  setText('pain', 'When '+(b.name||'the business')+' is closed or busy, every missed call or message is a customer who books elsewhere. This AI receptionist answers as '+(b.name||'the business')+' 24/7, gives info, and captures the booking. Try asking it anything. 👉');
+  setText('foot', (b.name||'')+(b.address?' · '+b.address:'')+' · Independent AI-receptionist demonstration.');
+  setText('av', persona.charAt(0)); setText('pnm', persona); setText('pst', 'AI receptionist · '+(b.workerUrl?'Qwen3.5 · NVIDIA':'demo'));
+
+  var SYS='You are '+persona+', the friendly AI receptionist for '+(b.name||'this business')+', a '+(b.industry||'local business')+(b.city?' in '+b.city:'')+'. Speak warmly and briefly (1-3 short sentences), like a great front desk on the phone. GOAL: get the caller booked, or capture their name + mobile number. Never end without one. FACTS (never invent beyond these): Services: '+((b.services||[]).join(', ')||'general services')+'. Hours: '+(b.hours||'see website')+'. '+(b.address?'Address: '+b.address+'. ':'')+(b.phone?'Phone: '+b.phone+'. ':'')+(b.booking?'Booking via '+b.booking+'. ':'')+(b.pricing?'Pricing: '+b.pricing+'. ':'')+(b.faqs?'FAQs: '+b.faqs+'. ':'')+' AFTER HOURS: if it is after hours, never tell them to call back later; say you can book them now and the team will confirm when they reopen, and they are first in line. RULES: do not invent prices, availability or promotions; you are the business AI assistant; keep it short and natural.';
+  var GREET='Hi! I\\'m '+persona+', the AI receptionist for '+(b.name||'us')+' 👋 I can answer questions, give info, and book you in 24/7. What can I help with?';
+  var msgs=[{role:'system',content:SYS},{role:'assistant',content:GREET}];
+  var lead=false;
+  var body=document.getElementById('body'),chips=document.getElementById('chips'),inp=document.getElementById('inp'),chat=document.getElementById('chat'),launcher=document.getElementById('launcher');
+  function add(t,w){var m=document.createElement('div');m.className='m '+w;var x=document.createElement('div');x.className='bub';x.textContent=t;m.appendChild(x);body.appendChild(m);body.scrollTop=body.scrollHeight;}
+  function typ(on){var t=document.getElementById('typ');if(on){if(t)return;t=document.createElement('div');t.id='typ';t.className='m bot typ';t.innerHTML='<div class=bub><span></span><span></span><span></span></div>';body.appendChild(t);body.scrollTop=body.scrollHeight;}else if(t)t.remove();}
+  function setChips(a){chips.innerHTML='';(a||[]).forEach(function(l){var c=document.createElement('div');c.className='chip';c.textContent=l;c.onclick=function(){ask(l);};chips.appendChild(c);});}
+  window.openChat=function(){chat.classList.add('open');launcher.style.display='none';setTimeout(function(){inp.focus();},200);};
+  window.closeChat=function(){chat.classList.remove('open');launcher.style.display='flex';};
+  function detect(t){var d=(t.match(/\\d/g)||[]).length;if(!lead&&d>=7){lead=true;var el=document.getElementById('ban');el.textContent='✅ Lead captured — saved & team notified.';el.style.background='#eafaef';el.style.color='#2f7a43';}}
+  window.ask=function(t){if(!t)return;add(t,'user');detect(t);msgs.push({role:'user',content:t});if(msgs.length>16)msgs=[msgs[0]].concat(msgs.slice(-14));typ(true);brain().then(function(r){typ(false);r=(r||'').trim()||fb(t);add(r,'bot');msgs.push({role:'assistant',content:r});}).catch(function(){typ(false);add(fb(t),'bot');});};
+  window.send=function(){var v=inp.value.trim();if(!v)return;inp.value='';ask(v);};
+  function brain(){if(b.workerUrl)return callProxy();if(window.puter&&puter.ai&&puter.ai.chat)return callPuter();return Promise.reject('none');}
+  function callProxy(){return fetch(b.workerUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:msgs})}).then(function(r){if(!r.ok)throw new Error('proxy');return r.json();}).then(function(d){var c=d&&d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content;if(!c)throw new Error('empty');return c;});}
+  function callPuter(){return puter.ai.chat(msgs,{model:'gpt-4o-mini'}).then(function(res){if(typeof res==='string')return res;if(res&&res.message){var c=res.message.content;return Array.isArray(c)?c.map(function(p){return p.text||'';}).join(''):c;}return String(res);});}
+  function fb(raw){var t=(raw||'').toLowerCase();
+    if(/(price|cost|how much|\\$)/.test(t))return 'Happy to help with pricing — '+(b.pricing||'it depends on the service')+'. Want me to book you a quick visit? What works best?';
+    if(/(book|appoint|schedul|reserve|avail)/.test(t))return 'Let\\'s get you booked! Which service is this for, and what day/time suits you?';
+    if(/(hour|open|close|today|weekend)/.test(t))return 'Our hours are '+(b.hours||'on our site')+'. It\\'s after hours now, but I can still book you and the team will confirm — want me to?';
+    if(/(where|address|location|direction)/.test(t))return 'We\\'re at '+(b.address||'see our site')+'. Want me to book you a visit?';
+    if(/(human|call me|talk to|speak|callback)/.test(t))return 'Of course — leave your name and best mobile number and the team will call you back shortly. What\\'s your name?';
+    if(/(hi|hello|hey|help)/.test(t))return 'Hi! 😊 I can help with our services, pricing, or booking you in. What are you after?';
+    return 'Happy to help! The quickest way — tell me what you need and your name + best mobile number, and I\\'ll get you booked.';}
+  add(GREET,'bot'); setChips((b.chips&&b.chips.length)?b.chips:['Services & pricing','Book an appointment','Hours & location','Talk to someone']);
+})();
+<\/script>
+</body>
+</html>`/*ENDTPL*/;
+
+/* ============================ BUILDER LOGIC ============================ */
+var $ = function(id){return document.getElementById(id);};
+var lastHtml = '', lastSlug = 'demo';
+function show(el, cls, msg){el.className='status show '+cls; el.textContent=msg;}
+function val(id){return ($(id).value||'').trim();}
+
+function buildBiz(){
+  var services = val('services').split('\n').map(function(s){return s.trim();}).filter(Boolean);
+  return {
+    name: val('name')||'Your Business',
+    industry: val('industry'),
+    tagline: val('tagline'),
+    city: val('city'),
+    phone: val('phone'),
+    address: val('address'),
+    booking: val('booking'),
+    color: val('color')||'#6366f1',
+    hours: val('hours'),
+    rating: val('rating'),
+    persona: val('persona')||'Robin',
+    services: services,
+    pricing: val('pricing'),
+    faqs: val('faqs'),
+    workerUrl: val('workerUrl').replace(/\/+$/,''),
+    chips: []
+  };
+}
+function slugify(s){return (s||'demo').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)||'demo';}
+
+function generate(){
+  var biz = buildBiz();
+  lastSlug = slugify(biz.name);
+  var title = biz.name.replace(/</g,'').replace(/>/g,'');
+  var html = SITE_TEMPLATE
+    .replace(/__TITLE__/g, title)
+    .replace('/*BIZ*/', 'window.BIZ = ' + JSON.stringify(biz) + ';');
+  lastHtml = html;
+  var pv = $('pv'); pv.srcdoc = html; pv.style.display='block'; $('pvEmpty').style.display='none';
+  $('pvUrl').textContent = 'yourname.github.io/demos/' + lastSlug + '/';
+  $('dlBtn').disabled=false; $('copyBtn').disabled=false; $('newtabBtn').disabled=false;
+  show($('genStatus'),'ok','✅ Generated. Preview on the right. Download → drop into demos/'+lastSlug+'/index.html on GitHub Pages.');
+}
+function download(){
+  if(!lastHtml) return;
+  var blob = new Blob([lastHtml], {type:'text/html'});
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'index.html'; a.click();
+}
+function copyHtml(){ if(!lastHtml) return; navigator.clipboard.writeText(lastHtml).then(function(){show($('genStatus'),'ok','📋 HTML copied to clipboard.');}); }
+function openTab(){ if(!lastHtml) return; var w=window.open(); w.document.open(); w.document.write(lastHtml); w.document.close(); }
+
+/* ---- AI auto-fill via the NVIDIA worker ---- */
+function autofill(){
+  var text = val('scrapeText');
+  var url = val('workerUrl').replace(/\/+$/,'');
+  if(!text){ show($('aiStatus'),'err','Paste some website text first.'); return; }
+  if(!url){ show($('aiStatus'),'err','Add your Worker URL first.'); return; }
+  show($('aiStatus'),'work','✨ Asking Qwen3.5 to extract the details…');
+  $('autofillBtn').disabled = true;
+  var prompt = 'From the business website text below, extract a strict JSON object with these keys: '+
+    'name, industry, tagline, city, phone, address, booking, hours, rating, '+
+    'services (array of short strings), pricing (one line), faqs (one line). '+
+    'Use empty string or empty array if unknown. Return ONLY the JSON, no prose, no code fences.\n\nWEBSITE TEXT:\n' + text.slice(0, 6000);
+  fetch(url, {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({messages:[{role:'user', content: prompt}]})
+  }).then(function(r){ return r.json(); }).then(function(d){
+    var raw = d && d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content;
+    if(!raw) throw new Error('No response');
+    raw = raw.replace(/```json/gi,'').replace(/```/g,'').trim();
+    var s = raw.indexOf('{'), e = raw.lastIndexOf('}');
+    if(s>=0 && e>s) raw = raw.slice(s, e+1);
+    var o = JSON.parse(raw);
+    function set(id,v){ if(v!==undefined && v!==null && v!=='') $(id).value = (typeof v==='object'? JSON.stringify(v): v); }
+    set('name',o.name); set('tagline',o.tagline); set('city',o.city); set('phone',o.phone);
+    set('address',o.address); set('booking',o.booking); set('hours',o.hours); set('rating',o.rating);
+    set('pricing',o.pricing); set('faqs',o.faqs);
+    if(o.industry){ var sel=$('industry'); var found=false; for(var i=0;i<sel.options.length;i++){ if(sel.options[i].value.toLowerCase()===(''+o.industry).toLowerCase()){sel.selectedIndex=i;found=true;} } if(!found){ var op=document.createElement('option'); op.text=o.industry; op.selected=true; sel.add(op);} }
+    if(Array.isArray(o.services)) $('services').value = o.services.join('\n');
+    show($('aiStatus'),'ok','✅ Filled in from Qwen3.5. Review the fields, then Generate.');
+  }).catch(function(err){
+    show($('aiStatus'),'err','Could not auto-fill ('+err.message+'). Check the Worker URL, or fill the form manually.');
+  }).finally(function(){ $('autofillBtn').disabled = false; });
+}
+
+/* sample so the preview isn't empty on first load */
+window.addEventListener('load', function(){
+  $('name').value='Apex Plumbing'; $('tagline').value='Fast, friendly, on time.';
+  $('city').value='Austin, TX'; $('phone').value='(512) 555-0140';
+  $('address').value='123 Main St, Austin, TX 78701'; $('booking').value='phone / Calendly';
+  $('hours').value='Mon-Fri 8-5, closed weekends'; $('rating').value='4.9'; $('color').value='#1f7a4d';
+  $('services').value='Drain cleaning\nWater heater repair\nEmergency plumbing\nLeak detection\nFixture installs';
+  $('pricing').value='Service call $89. Most repairs $150-600. Free estimates on installs.';
+  $('faqs').value='Do you offer emergency service? Yes, 24/7. Are estimates free? Yes for installs.';
+  generate();
+});
+</script>
+</body>
+</html>
